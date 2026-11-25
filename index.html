@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111311" />
+  <meta name="description" content="Интерактивный 3D-атлас устройства автомобиля. Изучайте узлы в движении: двигатель, трансмиссию, подвеску, рулевое управление и тормоза." />
+  <title>АВТО·АТЛАС — механика в движении</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/controls/OrbitControls.js":"./vendor/OrbitControls.js"}}</script>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="#" aria-label="Авто Атлас — на главную">
+      <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M5 28 16 7h7l10 21h-7l-2-5H14l-2 5H5Zm12-11h5l-2-6-3 6Z" fill="currentColor"/></svg>
+      <span>АВТО<span class="brand-dot">·</span>АТЛАС</span>
+    </a>
+    <nav class="nav" aria-label="Основная навигация">
+      <a class="active" href="#atlas">3D атлас</a>
+      <a href="#guide">Как это работает</a>
+      <a href="#about">О проекте</a>
+    </nav>
+    <div class="header-meta"><span class="status-dot"></span> ИНТЕРАКТИВНАЯ МОДЕЛЬ <span class="version">v.1.0</span></div>
+    <button class="mobile-menu icon-button" id="mobileMenu" aria-label="Открыть навигацию">☰</button>
+  </header>
+
+  <main id="atlas">
+    <section class="intro">
+      <div>
+        <div class="eyebrow"><span>01</span> ИНЖЕНЕРИЯ В ДЕТАЛЯХ</div>
+        <h1>Механика.<br><span>Без лишнего.</span></h1>
+      </div>
+      <div class="intro-copy">
+        <p>Загляните под кузов. Управляйте автомобилем<br>и наблюдайте, как сотни деталей работают<br>в едином механизме.</p>
+        <div class="intro-hint"><span class="mouse-icon"></span> Нажмите на деталь, чтобы узнать больше</div>
+      </div>
+    </section>
+
+    <section class="vehicle-switcher" aria-label="Выбор автомобиля">
+      <button class="vehicle-tab active" data-vehicle="carb" aria-pressed="true">
+        <span class="vehicle-index">01</span><span><b>Легковой автомобиль</b><small>Карбюраторный двигатель · задний привод</small></span><span class="tab-tag">КЛАССИКА</span>
+      </button>
+      <button class="vehicle-tab" data-vehicle="inject" aria-pressed="false">
+        <span class="vehicle-index">02</span><span><b>Легковой автомобиль</b><small>Инжекторный двигатель · передний привод</small></span><span class="tab-tag">ИНЖЕКТОР</span>
+      </button>
+      <button class="vehicle-tab" data-vehicle="jeep" aria-pressed="false">
+        <span class="vehicle-index">03</span><span><b>Внедорожник</b><small>Инжектор · полный привод · раздатка</small></span><span class="tab-tag">4×4</span>
+      </button>
+    </section>
+
+    <section class="workspace">
+      <div class="viewer-column">
+        <div class="viewer" id="viewer">
+          <div class="viewer-topbar">
+            <div class="model-title"><span class="live-dot"></span><span id="modelName">ВАЗ 2107 · УЧЕБНАЯ МОДЕЛЬ</span></div>
+            <div class="viewer-actions">
+              <button class="tool-button" id="explodeBtn" title="Разнести узлы" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4 8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4"/></svg><span>Узлы</span></button>
+              <button class="tool-button active" id="labelsBtn" title="Показать подписи" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8 9h8M8 12h5"/></svg><span>Подписи</span></button>
+              <button class="tool-button" id="resetCamera" title="Сбросить камеру"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6M4 4v6h6"/></svg></button>
+              <button class="tool-button" id="fullscreenBtn" title="На весь экран"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg></button>
+            </div>
+          </div>
+          <canvas id="scene" aria-label="Интерактивная трехмерная модель автомобиля без кузова"></canvas>
+          <div class="scene-labels" id="sceneLabels"></div>
+          <div class="part-tooltip" id="partTooltip"></div>
+          <div class="axis-gizmo" aria-hidden="true"><span class="axis-y">Y</span><span class="axis-z">Z</span><span class="axis-x">X</span><i></i></div>
+          <div class="viewer-bottom">
+            <div class="view-help"><span>ЛКМ</span> вращение <i></i><span>КОЛЕСО</span> масштаб <i></i><span>ПКМ</span> сдвиг</div>
+            <button id="autoRotate" class="rotate-button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M18.5 9A7 7 0 0 0 6 6.5L4 9m2 6a7 7 0 0 0 12 2.5L20 15"/></svg> Обзор 360°</button>
+          </div>
+          <div class="loading" id="loading"><span class="loader-ring"></span><b>Собираем автомобиль</b><small>Готовим интерактивные узлы…</small></div>
+          <div class="webgl-error" id="webglError" hidden><b>3D-просмотр недоступен</b><p>Включите аппаратное ускорение в браузере или откройте сайт в современном браузере.</p></div>
+        </div>
+
+        <div class="telemetry">
+          <div class="telemetry-main"><span class="telemetry-label">СКОРОСТЬ</span><div><strong id="speedValue">0</strong><span>км/ч</span></div></div>
+          <div class="telemetry-item"><span class="telemetry-label">ОБОРОТЫ ДВИГАТЕЛЯ</span><div class="rpm-row"><b id="rpmValue">850</b><span>об/мин</span></div><div class="rpm-track"><i id="rpmBar"></i><em></em></div></div>
+          <div class="telemetry-item transmission-state"><span class="telemetry-label">ТРАНСМИССИЯ</span><b id="transmissionText">Нейтраль</b><small id="driveText">Задний привод · RWD</small></div>
+          <div class="engine-running"><span class="pulse-ring"></span><div><b>Двигатель запущен</b><small>Все системы в норме</small></div></div>
+        </div>
+
+        <div class="controls-panel">
+          <div class="control-heading"><span class="eyebrow">УПРАВЛЕНИЕ АВТОМОБИЛЕМ</span><button id="resetDrive">Сбросить <kbd>R</kbd></button></div>
+          <div class="driving-controls">
+            <div class="pedals">
+              <button class="pedal" id="clutchPedal" data-control="clutch"><span class="pedal-symbol clutch-symbol"></span><span><b>Сцепление</b><small>Удерживайте · C</small></span><i></i></button>
+              <button class="pedal" id="brakePedal" data-control="brake"><span class="pedal-symbol brake-symbol"></span><span><b>Тормоз</b><small>Удерживайте · B</small></span><i></i></button>
+              <button class="pedal" id="gasPedal" data-control="gas"><span class="pedal-symbol gas-symbol"></span><span><b>Газ</b><small>Удерживайте · Пробел</small></span><i></i></button>
+            </div>
+            <div class="gear-control">
+              <div class="control-label">КОРОБКА ПЕРЕДАЧ <span>H-PATTERN</span></div>
+              <div class="gearbox-ui" id="gearbox">
+                <button data-gear="1">1</button><button data-gear="3">3</button><button data-gear="5">5</button>
+                <div class="gear-lines" aria-hidden="true"></div>
+                <button data-gear="2">2</button><button data-gear="4">4</button><button data-gear="R">R</button>
+                <button class="neutral active" data-gear="N" aria-label="Нейтральная передача">N</button>
+              </div>
+            </div>
+            <div class="steering-control">
+              <div class="control-label">РУЛЕВОЕ УПРАВЛЕНИЕ <span id="steeringDegrees">0°</span></div>
+              <div class="steering-row"><span>ЛЕВО · A</span><div class="steering-wheel" id="steeringWheel"><i></i><i></i><i></i><b></b></div><span>D · ПРАВО</span></div>
+              <input id="steeringRange" type="range" min="-100" max="100" value="0" aria-label="Поворот руля" />
+            </div>
+          </div>
+          <div class="jeep-options" id="jeepOptions" hidden><span>РАЗДАТОЧНАЯ КОРОБКА</span><button class="active" data-drive="4H">4H · полный привод</button><button data-drive="2H">2H · задний привод</button><button data-drive="4L">4L · пониженная</button><button data-diff="locked">Блокировка: выкл.</button></div>
+        </div>
+      </div>
+
+      <aside class="inspector" id="inspector">
+        <div class="inspector-tabs" role="tablist"><button class="active" id="detailsTab" role="tab" aria-selected="true">Описание детали</button><button id="catalogTab" role="tab" aria-selected="false">Все детали <span id="partCount">28</span></button></div>
+        <div class="part-detail" id="partDetail">
+          <div class="part-category"><span id="partCategory">ТРАНСМИССИЯ</span><span class="part-number" id="partNumber">01 / 28</span></div>
+          <div class="part-icon" id="partIcon"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="6"/><path d="M24 8v6m0 20v6M8 24h6m20 0h6M13 13l4 4m14 14 4 4M35 13l-4 4M17 31l-4 4"/></svg></div>
+          <h2 id="partTitle">Сцепление</h2>
+          <p class="part-subtitle" id="partSubtitle">Мгновенная связь двигателя и колёс</p>
+          <div class="part-status"><span class="status-dot"></span><span id="partState">Узел задействован</span><b id="partLoad">Нагрузка 0%</b></div>
+          <div class="detail-section"><h3><span>01</span> Как это работает</h3><p id="partDescription"></p><ol class="operation-steps" id="operationSteps"></ol></div>
+          <div class="detail-section failure"><h3><span>02</span> Если выйдет из строя</h3><p id="partFailure"></p></div>
+          <div class="detail-section damage"><h3><span>03</span> Причины повреждения</h3><ul id="partDamage"></ul></div>
+          <button class="focus-button" id="focusPart"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>Приблизить деталь <span>↗</span></button>
+        </div>
+        <div class="catalog" id="catalog" hidden>
+          <div class="catalog-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="partSearch" type="search" placeholder="Найти деталь…" autocomplete="off" /></div>
+          <div class="catalog-filters" id="catalogFilters"><button class="active" data-category="all">Все</button><button data-category="engine">Двигатель</button><button data-category="transmission">Трансмиссия</button><button data-category="chassis">Ходовая</button><button data-category="electrical">Системы</button></div>
+          <div class="catalog-list" id="catalogList"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="guide" id="guide">
+      <div class="eyebrow"><span>02</span> ЖИВОЙ УЧЕБНИК</div>
+      <div class="guide-heading"><h2>Не просто смотрите.<br><span>Понимайте процесс.</span></h2><p>Каждое действие водителя запускает цепочку механических процессов. Попробуйте сами — модель реагирует в реальном времени.</p></div>
+      <div class="guide-grid">
+        <article><span class="guide-num">01</span><div class="guide-icon">⌁</div><h3>Выжмите сцепление</h3><p>Нажимной диск отойдёт от маховика, а поток крутящего момента к коробке передач прервётся.</p><button data-demo="clutch">Запустить демонстрацию <span>→</span></button></article>
+        <article><span class="guide-num">02</span><div class="guide-icon">↟</div><h3>Переключите передачу</h3><p>Выжмите сцепление и выберите передачу. Вилка переместит синхронизатор к нужной шестерне.</p><button data-demo="gear">Запустить демонстрацию <span>→</span></button></article>
+        <article><span class="guide-num">03</span><div class="guide-icon">↻</div><h3>Поверните рулевое колесо</h3><p>Рулевая рейка сместится, тяги повернут ступицы, а колёса изменят угол и траекторию движения.</p><button data-demo="steering">Запустить демонстрацию <span>→</span></button></article>
+      </div>
+    </section>
+  </main>
+
+  <footer id="about"><div class="brand"><svg viewBox="0 0 38 38"><path d="M5 28 16 7h7l10 21h-7l-2-5H14l-2 5H5Zm12-11h5l-2-6-3 6Z" fill="currentColor"/></svg><span>АВТО<span class="brand-dot">·</span>АТЛАС</span></div><p>Интерактивный атлас для тех, кто хочет понимать автомобиль.</p><span>Учебные модели · Не руководство по ремонту</span></footer>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

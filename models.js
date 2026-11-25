@@ -143,12 +143,13 @@ export class VehicleModel {
     const m = this.mat, type = this.type;
     const block = this.part('engine', [1.35, 1.13, 0], [.25, .3, 0]);
     const housing = m.engine.clone(), liner = m.alum.clone();
-    this.shell(box(block, [.9, .53, .12], [0, .01, -.265], housing), .1);
-    this.shell(box(block, [.1, .53, .5], [-.4, .01, 0], housing), .1);
-    this.shell(box(block, [.1, .53, .5], [.4, .01, 0], housing), .1);
-    this.shell(box(block, [.86, .13, .58], [0, -.34, 0], m.dark), .1);
-    this.shell(box(block, [.9, .07, .61], [0, .51, 0], m.alum), .1);
-    this.shell(box(block, [.82, .17, .54], [0, .64, 0], m.engine), .12);
+    this.shell(box(block, [1.02, .86, .12], [0, .09, -.265], housing), .1);
+    this.shell(box(block, [1.02, .86, .12], [0, .09, .265], housing), .1);
+    this.shell(box(block, [.1, .86, .5], [-.46, .09, 0], housing), .1);
+    this.shell(box(block, [.1, .86, .5], [.46, .09, 0], housing), .1);
+    this.shell(box(block, [.94, .32, .58], [0, -.43, 0], m.dark), .1);
+    this.shell(box(block, [1.02, .07, .67], [0, .51, 0], m.alum), .1);
+    this.shell(box(block, [.94, .17, .54], [0, .64, 0], m.engine), .12);
     for (const z of [-.16, 0, .16]) box(block, [.64, .022, .018], [0, .738, z], m.alum);
     for (const x of [-.32, 0, .32]) for (const z of [-.23, .23]) bolt(block, [x, .74, z], m.steel, 'y', .014);
     cyl(block, .065, .035, [-.27, .745, -.1], m.black);
@@ -160,7 +161,7 @@ export class VehicleModel {
       bolt(block, [x, .57, -.24], m.steel, 'y', .018); bolt(block, [x, .57, .24], m.steel, 'y', .018);
     }
     for (let i = 0; i < 8; i++) bolt(block, [-.36 + (i % 4) * .24, -.255, i < 4 ? -.3 : .3], m.steel, 'y', .017);
-    for (let i = 0; i < 5; i++) box(block, [.025, .38, .64], [-.36 + i * .18, .03, 0], m.engine);
+    for (let i = 0; i < 5; i++) for (const z of [-.332, .332]) this.shell(box(block, [.025, .38, .018], [-.36 + i * .18, .03, z], m.engine), .1);
     const pistons = this.part('pistons', [1.35, 1.42, 0], [.25, .85, 0]);
     for (let i = 0; i < 4; i++) {
       const pg = new THREE.Group(); pg.position.x = -.31 + i * .205; pistons.add(pg);
@@ -187,12 +188,12 @@ export class VehicleModel {
         bolt(this.crank, [x + .04, -sign * .15, 0], m.steel, 'x', .014);
       }
     }
-    const cam = this.part('camshaft', [1.35, 1.69, -.03], [.15, .95, -.2]); this.cam = new THREE.Group(); cam.add(this.cam);
-    cyl(this.cam, .033, .95, [0, 0, -.13], m.steel, 'x', 24);
+    const cam = this.part('camshaft', [1.35, 1.69, 0], [.15, .95, -.2]); this.cam = new THREE.Group(); cam.add(this.cam);
+    cyl(this.cam, .033, .95, [0, 0, 0], m.steel, 'x', 24);
     for (let i = 0; i < 8; i++) {
       const x = -.36 + i * .105;
-      const c = cyl(this.cam, .068, .04, [x, 0, -.13], m.bronze, 'x', 24); c.scale.z = 1.5;
-      const valve = new THREE.Group(); valve.position.set(x, -.15, i % 2 ? .13 : -.29); cam.add(valve);
+      const c = cyl(this.cam, .068, .04, [x, 0, 0], m.bronze, 'x', 24); c.scale.z = 1.5;
+      const valve = new THREE.Group(); valve.position.set(x, -.15, i % 2 ? .15 : -.15); cam.add(valve);
       cyl(valve, .012, .28, [0, -.12, 0], m.steel, 'y', 12);
       cyl(valve, .052, .018, [0, -.27, 0], m.dark, 'y', 24);
       spring(valve, [0, -.2, 0], .16, .032, m.spring);
@@ -208,6 +209,11 @@ export class VehicleModel {
       cyl(timing, .008, .052, [.015, y, z], m.bronze, 'x', 8);
     }
     cyl(timing, .045, .1, [0, .48, 0], m.steel, 'x'); bolt(timing, [.065, .48, 0], m.dark, 'x', .025);
+    this.shell(cyl(timing, .235, .19, [.01, -.34, 0], m.engine, 'x', 40), .08);
+    this.shell(cyl(timing, .31, .19, [.01, .48, 0], m.engine, 'x', 40), .08);
+    this.shell(box(timing, [.19, .76, .52], [.01, .07, 0], m.engine), .08);
+    for (const y of [-.46, -.2, .34, .62]) for (const z of [-.19, .19]) bolt(timing, [.115, y, z], m.steel, 'x', .013);
+    cyl(timing, .065, .045, [.125, -.34, 0], m.dark, 'x', 28);
     const intake = this.part('intake', [1.35, 1.5, .54], [0, .5, .65]);
     for (let i = 0; i < 4; i++) {
       const x = -.31 + i * .205;
@@ -250,6 +256,10 @@ export class VehicleModel {
   buildTransmission() {
     const m = this.mat, type = this.type;
     const clutch = this.part('clutch', [.76, 1.02, 0], [.35, .1, 0]); this.clutchDiscs = [];
+    const bell = mesh(new THREE.CylinderGeometry(.37, .34, .52, 40, 1, true), m.dark, clutch, [-.08, 0, 0]); bell.rotation.z = Math.PI / 2; this.shell(bell, .07);
+    torus(clutch, .37, .018, [.18, 0, 0], m.steel, [0, Math.PI / 2, 0]);
+    torus(clutch, .345, .018, [-.34, 0, 0], m.steel, [0, Math.PI / 2, 0]);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; bolt(clutch, [.2, Math.cos(a) * .34, Math.sin(a) * .34], m.steel, 'x', .014); }
     const fly = new THREE.Group(); clutch.add(fly); this.flywheel = fly;
     cyl(fly, .32, .085, [0, 0, 0], m.steel, 'x', 48); gear(fly, .345, .05, [-.05, 0, 0], m.dark, 'x', .72);
     cyl(fly, .09, .105, [0, 0, 0], m.dark, 'x', 32);
@@ -268,12 +278,13 @@ export class VehicleModel {
     bearing(clutch, .075, [-.32, 0, 0], m.steel, m.dark, 'x');
     const gb = this.part('gearbox', type === 'inject' ? [.85, .91, 0] : [.05, .91, 0], [-.25, .25, 0]);
     const gbHousing = m.alum.clone();
-    this.shell(box(gb, [.74, .45, .12], [0, .01, -.22], gbHousing), .09);
-    this.shell(box(gb, [.74, .1, .48], [0, -.21, 0], gbHousing), .09);
-    this.shell(box(gb, [.09, .45, .48], [-.34, .01, 0], gbHousing), .09);
-    this.shell(box(gb, [.09, .45, .48], [.34, .01, 0], gbHousing), .09);
-    this.shell(box(gb, [.77, .055, .54], [0, .26, 0], m.dark), .1);
-    for (let i = 0; i < 5; i++) box(gb, [.025, .37, .54], [-.27 + i * .135, .015, 0], m.alum);
+    this.shell(box(gb, [.74, .56, .06], [0, -.01, -.34], gbHousing), .09);
+    this.shell(box(gb, [.74, .56, .06], [0, -.01, .34], gbHousing), .09);
+    this.shell(box(gb, [.74, .06, .74], [0, -.29, 0], gbHousing), .09);
+    this.shell(box(gb, [.09, .56, .74], [-.34, -.01, 0], gbHousing), .09);
+    this.shell(box(gb, [.09, .56, .74], [.34, -.01, 0], gbHousing), .09);
+    this.shell(box(gb, [.77, .055, .74], [0, .27, 0], m.dark), .1);
+    for (let i = 0; i < 5; i++) for (const z of [-.375, .375]) this.shell(box(gb, [.025, .38, .018], [-.27 + i * .135, .015, z], m.alum), .09);
     cyl(gb, .038, .9, [0, .03, .13], m.steel, 'x', 28); cyl(gb, .038, .82, [0, -.08, -.13], m.steel, 'x', 28);
     bearing(gb, .075, [-.37, .03, .13], m.steel, m.dark, 'x'); bearing(gb, .075, [.37, .03, .13], m.steel, m.dark, 'x');
     bearing(gb, .065, [-.37, -.08, -.13], m.steel, m.dark, 'x'); bearing(gb, .065, [.37, -.08, -.13], m.steel, m.dark, 'x');
@@ -287,8 +298,8 @@ export class VehicleModel {
     }
     this.shiftFork = new THREE.Group(); gb.add(this.shiftFork);
     torus(this.shiftFork, .085, .018, [0, .03, .13], m.green, [0, Math.PI / 2, 0], Math.PI * 1.5);
-    rod(this.shiftFork, [0, .05, .13], [0, .38, .13], .018, m.steel);
-    for (const z of [-.12, 0, .12]) cyl(gb, .012, .68, [0, .34, z], m.steel, 'x', 12);
+    rod(this.shiftFork, [0, .05, .13], [0, .22, .13], .018, m.steel);
+    for (const z of [-.12, 0, .12]) cyl(gb, .012, .68, [0, .22, z], m.steel, 'x', 12);
     cyl(gb, .09, .14, [.44, .03, .13], m.dark, 'x', 28); bolt(gb, [.52, .03, .13], m.steel, 'x', .025);
     if (type === 'carb') this.buildRearDrive(false);
     if (type === 'inject') this.buildFrontDrive();
@@ -296,7 +307,7 @@ export class VehicleModel {
   }
   differentialDetails(diff, dg, radius) {
     const m = this.mat;
-    const housing = mesh(new THREE.SphereGeometry(radius * .82, 32, 20), m.dark, dg); housing.scale.set(1.18, 1, 1); this.shell(housing, .08);
+    const housing = mesh(new THREE.SphereGeometry(radius * 1.03, 32, 20), m.dark, dg); housing.scale.set(1.08, 1, 1); this.shell(housing, .08);
     gear(dg, radius, .065, [0, 0, 0], m.bronze, 'z', .56);
     cyl(dg, radius * .58, .12, [0, 0, 0], m.dark, 'z', 32);
     for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; bolt(dg, [Math.cos(a) * radius * .75, Math.sin(a) * radius * .75, .045], m.steel, 'z', .013); }
@@ -342,12 +353,12 @@ export class VehicleModel {
   }
   buildTransfer() {
     const m = this.mat, tc = this.part('transferCase', [-.05, .82, 0], [0, .65, .5]);
-    this.shell(box(tc, [.48, .4, .48], [0, 0, 0], m.alum), .08);
-    for (const x of [-.22, .22]) for (const z of [-.2, .2]) bolt(tc, [x, .22, z], m.steel, 'y', .018);
+    this.shell(box(tc, [.58, .55, .72], [0, 0, 0], m.alum), .08);
+    for (const x of [-.25, .25]) for (const z of [-.3, .3]) bolt(tc, [x, .29, z], m.steel, 'y', .018);
     this.transferGears = [gear(tc, .18, .075, [-.12, .04, .14], m.bronze), gear(tc, .23, .075, [.13, -.02, -.12], m.steel)];
     for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; box(tc, [.035, .035, .025], [Math.cos(a) * .18, Math.sin(a) * .18, .02], m.dark).rotation.z = a; }
     bearing(tc, .07, [-.24, .04, .14], m.steel, m.dark, 'x'); bearing(tc, .085, [.24, -.02, -.12], m.steel, m.dark, 'x');
-    this.transferFork = new THREE.Group(); tc.add(this.transferFork); rod(this.transferFork, [0, .05, .15], [0, .36, .15], .018, m.green);
+    this.transferFork = new THREE.Group(); tc.add(this.transferFork); rod(this.transferFork, [0, .05, .15], [0, .18, .15], .018, m.green);
   }
   buildWheels() {
     const m = this.mat, wg = this.part('wheels', [0, 0, 0], [0, 0, .3]);
@@ -409,6 +420,7 @@ export class VehicleModel {
     const m = this.mat, rack = this.part('steeringRack', [1.48, .75, 0], [.25, -.05, .45]); this.rackSlider = new THREE.Group(); rack.add(this.rackSlider);
     cyl(this.rackSlider, .045, 1.23, [0, 0, 0], m.steel, 'z', 28);
     this.shell(box(rack, [.22, .18, .62], [0, 0, 0], m.alum), .12);
+    this.shell(cyl(rack, .115, .24, [-.08, .09, 0], m.alum, 'x', 32), .12);
     gear(rack, .09, .08, [-.08, .09, 0], m.bronze, 'x');
     for (const z of [-.58, .58]) {
       rod(this.rackSlider, [0, 0, z * .65], [.19, -.05, z * 1.4], .023, m.steel);

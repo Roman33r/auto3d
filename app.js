@@ -252,7 +252,24 @@ $('xrayBtn').addEventListener('click', e => {
 $('labelsBtn').addEventListener('click', e => { labelsEnabled = !labelsEnabled; e.currentTarget.setAttribute('aria-pressed', labelsEnabled); e.currentTarget.classList.toggle('active', labelsEnabled); $('sceneLabels').style.display = labelsEnabled ? '' : 'none'; });
 $('resetCamera').addEventListener('click', () => resetCamera());
 $('autoRotate').addEventListener('click', e => { autoRotate = !autoRotate; controls.autoRotate = autoRotate; e.currentTarget.classList.toggle('active', autoRotate); e.currentTarget.setAttribute('aria-pressed', autoRotate); });
-$('fullscreenBtn').addEventListener('click', async () => { try { if (!document.fullscreenElement) await viewer.requestFullscreen(); else await document.exitFullscreen(); } catch { toast('Полноэкранный режим недоступен'); } });
+function syncFullscreenUI() {
+  const active = Boolean(document.fullscreenElement) || document.querySelector('.workspace').classList.contains('fullscreen-fallback');
+  $('fullscreenBtn').classList.toggle('active', active); $('fullscreenBtn').title = active ? 'Выйти из полноэкранного режима' : 'На весь экран';
+  requestAnimationFrame(resizeScene);
+}
+function setFullscreenFallback(active) {
+  document.querySelector('.workspace').classList.toggle('fullscreen-fallback', active);
+  document.body.classList.toggle('fullscreen-open', active); syncFullscreenUI();
+}
+$('fullscreenBtn').addEventListener('click', async () => {
+  const root = document.querySelector('.workspace');
+  try {
+    if (document.fullscreenElement) { await document.exitFullscreen(); setFullscreenFallback(false); return; }
+  } catch { setFullscreenFallback(false); return; }
+  setFullscreenFallback(!root.classList.contains('fullscreen-fallback'));
+});
+document.addEventListener('fullscreenchange', syncFullscreenUI);
+window.addEventListener('keydown', e => { if (e.code === 'Escape' && document.querySelector('.workspace').classList.contains('fullscreen-fallback')) setFullscreenFallback(false); });
 $('focusPart').addEventListener('click', () => {
   const pos = model?.getPartPosition(selectedId); if (!pos) return;
   const direction = selectedId === 'battery' ? new THREE.Vector3(-1, .65, -.85).normalize() : camera.position.clone().sub(controls.target).normalize();

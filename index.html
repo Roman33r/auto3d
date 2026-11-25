@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./style.css" />
-  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/controls/OrbitControls.js":"./vendor/OrbitControls.js"}}</script>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/controls/OrbitControls.js":"./vendor/OrbitControls.js","three/addons/geometries/RoundedBoxGeometry.js":"./vendor/RoundedBoxGeometry.js","three/addons/environments/RoomEnvironment.js":"./vendor/RoomEnvironment.js"}}</script>
 </head>
 <body>
   <header class="header">
@@ -59,6 +59,7 @@
             <div class="model-title"><span class="live-dot"></span><span id="modelName">ВАЗ 2107 · УЧЕБНАЯ МОДЕЛЬ</span></div>
             <div class="viewer-actions">
               <button class="tool-button" id="explodeBtn" title="Разнести узлы" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4 8-4Zm-8 9 8 4 8-4M4 17l8 4 8-4"/></svg><span>Узлы</span></button>
+              <button class="tool-button" id="xrayBtn" title="Рентген: прозрачные корпуса" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><path d="M8 6h8v12H8zM11 6v12M8 10h8M8 14h8"/></svg><span>Рентген</span></button>
               <button class="tool-button active" id="labelsBtn" title="Показать подписи" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8 9h8M8 12h5"/></svg><span>Подписи</span></button>
               <button class="tool-button" id="resetCamera" title="Сбросить камеру"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6M4 4v6h6"/></svg></button>
               <button class="tool-button" id="fullscreenBtn" title="На весь экран"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg></button>
@@ -66,6 +67,7 @@
           </div>
           <canvas id="scene" aria-label="Интерактивная трехмерная модель автомобиля без кузова"></canvas>
           <div class="scene-labels" id="sceneLabels"></div>
+          <div class="xray-badge" id="xrayBadge" hidden><span></span> РЕНТГЕН · КОРПУСА ПРОЗРАЧНЫ</div>
           <div class="part-tooltip" id="partTooltip"></div>
           <div class="axis-gizmo" aria-hidden="true"><span class="axis-y">Y</span><span class="axis-z">Z</span><span class="axis-x">X</span><i></i></div>
           <div class="viewer-bottom">

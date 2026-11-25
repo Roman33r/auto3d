@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { VehicleModel } from './models.js';
 import { VEHICLES, PARTS, CATEGORY_NAMES, partsFor, getPart } from './parts.js';
 
@@ -16,18 +17,19 @@ function initScene() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
-    scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x1a1e17, .025);
+    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x1a1d1b, .025);
+    const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
     camera = new THREE.PerspectiveCamera(38, 1, .1, 100); camera.position.set(6.7, 4.5, 6.8);
     controls = new OrbitControls(camera, canvas); controls.target.set(0, .9, 0); controls.enableDamping = true; controls.dampingFactor = .065;
     controls.minDistance = 2.2; controls.maxDistance = 16; controls.maxPolarAngle = Math.PI * .48; controls.autoRotateSpeed = .7;
     controls.update();
-    scene.add(new THREE.HemisphereLight(0xe9f0df, 0x252924, 1.7));
-    const key = new THREE.DirectionalLight(0xf4f4df, 3.0); key.position.set(3, 8, 5); key.castShadow = true;
+    scene.add(new THREE.HemisphereLight(0xe8edf0, 0x242725, 1.2));
+    const key = new THREE.DirectionalLight(0xf3f1ea, 2.5); key.position.set(3, 8, 5); key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048); key.shadow.camera.left = -5; key.shadow.camera.right = 5; key.shadow.camera.top = 5; key.shadow.camera.bottom = -5; key.shadow.bias = -.0005; scene.add(key);
-    const rim = new THREE.DirectionalLight(0xe5f0d3, 1.5); rim.position.set(-5, 4, -4); scene.add(rim);
+    const rim = new THREE.DirectionalLight(0xdde5e6, 1.5); rim.position.set(-5, 4, -4); scene.add(rim);
     const fill = new THREE.DirectionalLight(0x9fb9c4, 1.4); fill.position.set(1, 2, -5); scene.add(fill);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x20251d, roughness: 1, metalness: 0, transparent: true, opacity: .62 }));
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x20231f, roughness: 1, metalness: 0, transparent: true, opacity: .62 }));
     ground.rotation.x = -Math.PI / 2; ground.position.y = .02; ground.receiveShadow = true; scene.add(ground);
     const grid = new THREE.GridHelper(16, 40, 0x424a39, 0x32382d); grid.position.y = .025; grid.material.transparent = true; grid.material.opacity = .32; scene.add(grid);
     const contact = new THREE.Mesh(new THREE.CircleGeometry(3.2, 64), new THREE.MeshBasicMaterial({ color: 0x090c08, transparent: true, opacity: .22, depthWrite: false }));
@@ -95,11 +97,18 @@ function getPick(event) {
   pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
   raycaster.setFromCamera(pointer, camera);
   const hits = raycaster.intersectObject(model.root, true);
+  let shellFallback = null;
   for (const hit of hits) {
     let o = hit.object;
-    while (o && o !== model.root) { if (o.userData.partId && getPart(o.userData.partId)) return o.userData.partId; o = o.parent; }
+    while (o && o !== model.root) {
+      if (o.userData.partId && getPart(o.userData.partId)) {
+        if (model.xray && hit.object.userData.xrayShell) { shellFallback ||= o.userData.partId; break; }
+        return o.userData.partId;
+      }
+      o = o.parent;
+    }
   }
-  return null;
+  return shellFallback;
 }
 
 canvas.addEventListener('pointerdown', e => { pointerDown = { x: e.clientX, y: e.clientY }; });
@@ -171,7 +180,7 @@ function setVehicle(type) {
   document.querySelectorAll('.vehicle-tab').forEach(b => { const on = b.dataset.vehicle === type; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
   $('modelName').textContent = VEHICLES[type].name; $('driveText').textContent = VEHICLES[type].drive;
   $('jeepOptions').hidden = type !== 'jeep'; $('partCount').textContent = partsFor(type).length;
-  if (model) model.dispose(); model = new VehicleModel(scene, type); selectedId = 'clutch'; model.setHighlight(selectedId);
+  if (model) model.dispose(); model = new VehicleModel(scene, type); model.setXray($('xrayBtn').getAttribute('aria-pressed') === 'true'); selectedId = 'clutch'; model.setHighlight(selectedId);
   rebuildLabels(); selectPart('clutch'); updateGearUI(); resetCamera(); renderCatalog();
   document.querySelectorAll('[data-drive]').forEach(b => b.classList.toggle('active', b.dataset.drive === '4H'));
   toast(`Модель собрана: ${type === 'carb' ? 'карбюраторная классика' : type === 'inject' ? 'инжекторный передний привод' : 'внедорожник с раздаткой'}`);
@@ -217,6 +226,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyA') { e.preventDefault(); input.left = true; }
   if (e.code === 'KeyD') { e.preventDefault(); input.right = true; }
   if (e.code === 'KeyR') resetDrive();
+  if (e.code === 'KeyX') $('xrayBtn').click();
   if (/Digit[1-5]/.test(e.code)) setGear(e.code.slice(-1));
   if (e.code === 'KeyN') setGear('N');
 });
@@ -234,13 +244,20 @@ $('catalogFilters').addEventListener('click', e => { const b = e.target.closest(
 $('catalogList').addEventListener('click', e => { const b = e.target.closest('[data-part]'); if (b) selectPart(b.dataset.part); });
 document.querySelectorAll('.vehicle-tab').forEach(b => b.addEventListener('click', () => setVehicle(b.dataset.vehicle)));
 $('explodeBtn').addEventListener('click', e => { const b = e.currentTarget, active = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', active); b.classList.toggle('active', active); model?.setExploded(active); toast(active ? 'Узлы разнесены для изучения' : 'Автомобиль собран'); });
+$('xrayBtn').addEventListener('click', e => {
+  const b = e.currentTarget, active = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', active); b.classList.toggle('active', active); $('xrayBadge').hidden = !active; viewer.classList.toggle('xray-active', active);
+  model?.setXray(active); toast(active ? 'Рентген включён: корпуса, шины и баки прозрачны' : 'Рентген выключен');
+});
 $('labelsBtn').addEventListener('click', e => { labelsEnabled = !labelsEnabled; e.currentTarget.setAttribute('aria-pressed', labelsEnabled); e.currentTarget.classList.toggle('active', labelsEnabled); $('sceneLabels').style.display = labelsEnabled ? '' : 'none'; });
 $('resetCamera').addEventListener('click', () => resetCamera());
 $('autoRotate').addEventListener('click', e => { autoRotate = !autoRotate; controls.autoRotate = autoRotate; e.currentTarget.classList.toggle('active', autoRotate); e.currentTarget.setAttribute('aria-pressed', autoRotate); });
 $('fullscreenBtn').addEventListener('click', async () => { try { if (!document.fullscreenElement) await viewer.requestFullscreen(); else await document.exitFullscreen(); } catch { toast('Полноэкранный режим недоступен'); } });
 $('focusPart').addEventListener('click', () => {
   const pos = model?.getPartPosition(selectedId); if (!pos) return;
-  const direction = camera.position.clone().sub(controls.target).normalize(); cameraGoal = { target: pos, position: pos.clone().addScaledVector(direction, 2.3).add(new THREE.Vector3(0, .45, 0)) };
+  const direction = selectedId === 'battery' ? new THREE.Vector3(-1, .65, -.85).normalize() : camera.position.clone().sub(controls.target).normalize();
+  const distance = selectedId === 'battery' ? 1.45 : 2.3;
+  cameraGoal = { target: pos, position: pos.clone().addScaledVector(direction, distance).add(new THREE.Vector3(0, .25, 0)) };
 });
 $('mobileMenu').addEventListener('click', () => document.querySelector('.nav').classList.toggle('open'));
 document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => document.querySelector('.nav').classList.remove('open')));
